@@ -1,1 +1,40 @@
 /* You can add global styles to this file, and also import other style files */
+body{
+    background-image: url("assets/bg1.jpeg"); 
+    background-color: #ffa100;
+    background-attachment: fixed;
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    text-align: center;
+    /* height: 100vh!important; */
+    /* width: 100vw!important; */
+    margin: 0;
+  }
+  .flex{
+    /* background-color: 0,whitesmoke;
+    box-sizing: content-box;
+    height: 92%;
+    width: 60%;
+    margin: 4% 6% 4% 6%;
+    position: fixed;
+     */
+    align-items: flex-end;
+    display: flex;
+    margin: 10px;
+    position: relative;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #333;
+    color: white;
+    /* justify-content: space-around; */
+    /* align-items: center;
+    align-content: center; */
+    /* height: 100%; */
+
+}
+
+app-about{
+    display: flex;
+    justify-content: center;
+}

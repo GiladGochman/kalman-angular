@@ -1,0 +1,22 @@
+.container-smoke{
+    background: rgba(96,96,96, 0.3) ;
+    background-attachment: fixed;
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    text-align: center;
+    max-width: 1000px;
+    height:90vh;
+    width:90vw;
+    border-radius: 10px;
+    display: block;
+}
+.content{
+    padding: 5rem;
+    text-align:left
+    
+}
+p{
+    letter-spacing: 0.2rem;
+    line-height: 1.5rem;
+}
