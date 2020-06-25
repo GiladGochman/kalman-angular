@@ -5,6 +5,7 @@ import { WhyComponent } from './why/why.component';
 import { ReunionComponent } from './reunion/reunion.component';
 
 const routes: Routes = [
+  { path: '',   redirectTo: '/about-component', pathMatch: 'full'},
   { path: 'about-component', component: AboutComponent },
   { path: 'why-component', component: WhyComponent },
   { path: 'reunion-component', component: ReunionComponent },
