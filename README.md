@@ -1,27 +1,73 @@
 # Kalman
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 9.1.8.
+A web-based PDF viewer for the Kalman mahzor, built with Angular and an Express backend. The backend renders the PDF into obfuscated tiles to prevent direct downloading.
 
-## Development server
+## Prerequisites
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
+- Node.js (v18+)
+- npm
 
-## Code scaffolding
+## Book placement
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+Place the PDF file at:
 
-## Build
+```
+src/assets/pgishat mahzor.pdf
+```
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory. Use the `--prod` flag for a production build.
+The filename must be exactly `pgishat mahzor.pdf` (with a space). Alternatively, override the path by setting the `PDF_PATH` environment variable in `server/.env`.
 
-## Running unit tests
+## Running locally
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+You need to run two processes: the Angular frontend and the Express backend.
 
-## Running end-to-end tests
+### 1. Install dependencies
 
-Run `ng e2e` to execute the end-to-end tests via [Protractor](http://www.protractortest.org/).
+```bash
+# Frontend
+npm install
 
-## Further help
+# Backend
+cd server
+npm install
+cd ..
+```
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI README](https://github.com/angular/angular-cli/blob/master/README.md).
+### 2. (Optional) Pre-render tile cache
+
+Running warmup pre-renders all PDF pages into the tile cache so the first page load is instant. Skip this step to let tiles render on demand instead.
+
+```bash
+cd server
+npm run warmup
+cd ..
+```
+
+### 3. Start the backend
+
+```bash
+cd server
+npm run dev
+```
+
+The server runs on `http://localhost:3000`.
+
+### 4. Start the frontend
+
+In a separate terminal:
+
+```bash
+npm start
+```
+
+Navigate to `http://localhost:4200`.
+
+## Environment variables
+
+Create `server/.env` to override defaults:
+
+| Variable   | Default                          | Description                     |
+|------------|----------------------------------|---------------------------------|
+| `PDF_PATH` | `src/assets/pgishat mahzor.pdf`  | Path to the PDF file            |
+| `CACHE_DIR` | `tile-cache`                    | Directory for pre-rendered tiles |
+| `PORT`     | `3000`                           | Backend server port              |
