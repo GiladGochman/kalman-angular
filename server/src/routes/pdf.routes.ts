@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import * as path from 'path';
 import { config } from '../config';
-import { getPdfInfo, renderPage } from '../services/renderer.service';
+import { getPdfInfo, renderPage, getPageDimensions } from '../services/renderer.service';
 import { splitIntoTiles } from '../services/tiler.service';
 import { encodeTile } from '../services/obfuscator.service';
 import { getCachedTile, saveTile } from '../services/cache.service';
@@ -22,6 +22,17 @@ router.get('/metadata', async (_req: Request, res: Response) => {
     });
   } catch (e) {
     console.error('metadata error', e);
+    res.status(500).json({ error: String(e) });
+  }
+});
+
+router.get('/page/:pageNum/info', async (req: Request, res: Response) => {
+  const pageNum = parseInt(req.params['pageNum'], 10);
+  if (isNaN(pageNum)) { res.status(400).json({ error: 'Invalid page' }); return; }
+  try {
+    const dims = await getPageDimensions(config.pdfPath, pageNum, 1.5);
+    res.json({ ...dims, tileRows: config.tileRows, tileCols: config.tileCols });
+  } catch (e) {
     res.status(500).json({ error: String(e) });
   }
 });

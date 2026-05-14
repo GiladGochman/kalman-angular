@@ -59,6 +59,19 @@ export async function getPdfInfo(pdfPath: string): Promise<PageInfo> {
   };
 }
 
+export async function getPageDimensions(pdfPath: string, pageNum: number, scale: number): Promise<{ width: number; height: number }> {
+  ensureLoaded();
+  const data = new Uint8Array(fs.readFileSync(pdfPath));
+  const doc = await pdfjsLib.getDocument({ data, useSystemFonts: true }).promise;
+  const page = await doc.getPage(pageNum);
+  const viewport = page.getViewport({ scale });
+  await doc.destroy();
+  return {
+    width: Math.round(viewport.width),
+    height: Math.round(viewport.height),
+  };
+}
+
 export async function renderPage(pdfPath: string, pageNum: number, scale = 1.5): Promise<Buffer> {
   ensureLoaded();
   const data = new Uint8Array(fs.readFileSync(pdfPath));

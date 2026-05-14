@@ -1,6 +1,6 @@
 import {
-  Component, OnInit, AfterViewChecked,
-  signal, computed, QueryList, ViewChildren, ElementRef,
+  Component, OnInit, AfterViewInit,
+  signal, ViewChild, ElementRef,
 } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { forkJoin } from 'rxjs';
@@ -15,10 +15,6 @@ const XOR_KEY = 0xA7;
 
 interface PdfMetadata {
   totalPages: number;
-  tileRows: number;
-  tileCols: number;
-  pageWidthPx: number;
-  pageHeightPx: number;
 }
 
 @Component({
@@ -28,39 +24,13 @@ interface PdfMetadata {
   templateUrl: './reunion.component.html',
   styleUrls: ['./reunion.component.css'],
 })
-export class ReunionComponent implements OnInit, AfterViewChecked {
-  @ViewChildren('tileCanvas') tileCanvases!: QueryList<ElementRef<HTMLCanvasElement>>;
+export class ReunionComponent implements OnInit, AfterViewInit {
+  @ViewChild('pageCanvas') pageCanvas!: ElementRef<HTMLCanvasElement>;
 
   metadata = signal<PdfMetadata | null>(null);
   currentPage = signal(1);
   isLoading = signal(false);
   error = signal<string | null>(null);
-
-  // Pending draw work: set when tiles arrive before canvases are in the DOM
-  private pendingDraws: Array<{ index: number; imageData: ImageData }> = [];
-  private canvasesReady = false;
-
-  tileSlots = computed(() => {
-    const m = this.metadata();
-    if (!m) return [];
-    const slots: { row: number; col: number; key: string }[] = [];
-    for (let r = 0; r < m.tileRows; r++) {
-      for (let c = 0; c < m.tileCols; c++) {
-        slots.push({ row: r, col: c, key: `${r}-${c}` });
-      }
-    }
-    return slots;
-  });
-
-  tileWidth = computed(() => {
-    const m = this.metadata();
-    return m ? Math.ceil(m.pageWidthPx / m.tileCols) : 0;
-  });
-
-  tileHeight = computed(() => {
-    const m = this.metadata();
-    return m ? Math.ceil(m.pageHeightPx / m.tileRows) : 0;
-  });
 
   constructor(private http: HttpClient) {}
 
@@ -70,19 +40,11 @@ export class ReunionComponent implements OnInit, AfterViewChecked {
         this.metadata.set(data);
         this.loadPage(1);
       },
-      error: (err) => this.error.set('Could not connect to book server. Make sure it is running.'),
+      error: () => this.error.set('Could not connect to book server. Make sure it is running.'),
     });
   }
 
-  ngAfterViewChecked(): void {
-    if (this.pendingDraws.length && this.tileCanvases.length) {
-      const draws = [...this.pendingDraws];
-      this.pendingDraws = [];
-      for (const { index, imageData } of draws) {
-        this.drawToCanvas(index, imageData);
-      }
-    }
-  }
+  ngAfterViewInit(): void {}
 
   loadPage(page: number): void {
     const m = this.metadata();
@@ -90,29 +52,57 @@ export class ReunionComponent implements OnInit, AfterViewChecked {
 
     this.currentPage.set(page);
     this.isLoading.set(true);
-    this.canvasesReady = false;
-    this.pendingDraws = [];
 
-    const tileCount = m.tileRows * m.tileCols;
-    const fetches = Array.from({ length: tileCount }, (_, i) => {
-      const row = Math.floor(i / m.tileCols);
-      const col = i % m.tileCols;
-      return this.http.get(`/api/page/${page}/tile/${row}/${col}`, { responseType: 'blob' });
-    });
+    this.http.get<{ width: number; height: number; tileRows: number; tileCols: number }>(`/api/page/${page}/info`).subscribe({
+      next: (info) => {
+        const tileCount = info.tileRows * info.tileCols;
+        const fetches = Array.from({ length: tileCount }, (_, i) => {
+          const row = Math.floor(i / info.tileCols);
+          const col = i % info.tileCols;
+          return this.http.get(`/api/page/${page}/tile/${row}/${col}`, { responseType: 'blob' });
+        });
 
-    forkJoin(fetches).subscribe({
-      next: (blobs) => {
-        this.isLoading.set(false);
-        blobs.forEach((blob, index) => this.decodeBlobToCanvas(index, blob));
+        forkJoin(fetches).subscribe({
+          next: (blobs) => {
+            this.isLoading.set(false);
+            this.renderTilesToCanvas(blobs, info.width, info.height, info.tileRows, info.tileCols);
+          },
+          error: () => {
+            this.isLoading.set(false);
+            this.error.set('Failed to load page tiles.');
+          },
+        });
       },
-      error: (err) => {
+      error: () => {
         this.isLoading.set(false);
-        this.error.set('Failed to load page tiles.');
+        this.error.set('Failed to load page info.');
       },
     });
   }
 
-  private async decodeBlobToCanvas(index: number, blob: Blob): Promise<void> {
+  private async renderTilesToCanvas(
+    blobs: Blob[], pageW: number, pageH: number, tileRows: number, tileCols: number
+  ): Promise<void> {
+    const canvas = this.pageCanvas?.nativeElement;
+    if (!canvas) return;
+
+    canvas.width = pageW;
+    canvas.height = pageH;
+
+    const ctx = canvas.getContext('2d')!;
+    const tileW = Math.ceil(pageW / tileCols);
+    const tileH = Math.ceil(pageH / tileRows);
+
+    const decoded = await Promise.all(blobs.map(blob => this.decodeBlob(blob)));
+
+    for (let i = 0; i < decoded.length; i++) {
+      const row = Math.floor(i / tileCols);
+      const col = i % tileCols;
+      ctx.putImageData(decoded[i], col * tileW, row * tileH);
+    }
+  }
+
+  private async decodeBlob(blob: Blob): Promise<ImageData> {
     const bitmap = await createImageBitmap(blob);
     const offscreen = document.createElement('canvas');
     offscreen.width = bitmap.width;
@@ -121,7 +111,7 @@ export class ReunionComponent implements OnInit, AfterViewChecked {
     ctx.drawImage(bitmap, 0, 0);
     const imageData = ctx.getImageData(0, 0, offscreen.width, offscreen.height);
     this.decodeImageData(imageData);
-    this.drawToCanvas(index, imageData);
+    return imageData;
   }
 
   private decodeImageData(imageData: ImageData): void {
@@ -137,24 +127,8 @@ export class ReunionComponent implements OnInit, AfterViewChecked {
     }
   }
 
-  private drawToCanvas(index: number, imageData: ImageData): void {
-    const canvasEl = this.tileCanvases?.get(index)?.nativeElement;
-    if (!canvasEl) {
-      this.pendingDraws.push({ index, imageData });
-      return;
-    }
-    canvasEl.width = imageData.width;
-    canvasEl.height = imageData.height;
-    canvasEl.getContext('2d')!.putImageData(imageData, 0, 0);
-  }
-
-  prevPage(): void {
-    this.loadPage(this.currentPage() - 1);
-  }
-
-  nextPage(): void {
-    this.loadPage(this.currentPage() + 1);
-  }
+  prevPage(): void { this.loadPage(this.currentPage() - 1); }
+  nextPage(): void { this.loadPage(this.currentPage() + 1); }
 
   goToPage(event: Event): void {
     const val = parseInt((event.target as HTMLInputElement).value, 10);

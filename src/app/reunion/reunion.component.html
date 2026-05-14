@@ -32,16 +32,10 @@
       <mat-progress-bar mode="indeterminate" class="loading-bar"></mat-progress-bar>
     }
 
-    <div class="tile-grid"
-         [style.grid-template-columns]="'repeat(' + metadata()!.tileCols + ', 1fr)'"
-         [style.grid-template-rows]="'repeat(' + metadata()!.tileRows + ', auto)'">
-      @for (tile of tileSlots(); track tile.key) {
-        <canvas #tileCanvas
-                [width]="tileWidth()"
-                [height]="tileHeight()"
-                (contextmenu)="$event.preventDefault()">
-        </canvas>
-      }
+    <div class="canvas-wrapper">
+      <canvas #pageCanvas
+              (contextmenu)="$event.preventDefault()">
+      </canvas>
     </div>
 
   </div>
