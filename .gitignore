@@ -9,6 +9,10 @@
 
 # dependencies
 /node_modules
+/server/node_modules
+
+# tile cache (generated at runtime)
+/tile-cache
 
 # profiling files
 chrome-profiler-events*.json
@@ -44,3 +48,6 @@ testem.log
 # System Files
 .DS_Store
 Thumbs.db
+
+# Copyrighted files:
+pgishat mahzor.pdf

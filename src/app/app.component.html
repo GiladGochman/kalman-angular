@@ -1,26 +1,15 @@
+<mat-toolbar color="primary" class="app-toolbar">
+  <span class="brand">Kalman Gochman</span>
+  <span class="spacer"></span>
+  <a mat-button routerLink="/book" routerLinkActive="active-link">"Class Reunion"</a>
+  <a mat-button routerLink="/why" routerLinkActive="active-link">Why did you survive?</a>
+  <a mat-button routerLink="/about" routerLinkActive="active-link">About the author</a>
+</mat-toolbar>
 
-    <link rel="stylesheet" href="app.component.css">
+<main class="page-content">
+  <router-outlet></router-outlet>
+</main>
 
-  
-  <nav class="navbar">
-    <div class="brand-title">        Kalman Gochman      </div>
-    <a href="#" class="toggle-button">
-      <span class="bar"></span>
-      <span class="bar"></span>
-      <span class="bar"></span>
-    </a>
-    <div class="navbar-links">
-      <ul>
-        <li><a routerLink="/reunion-component" routerLinkActive="active">"Class Reunion"</a></li>
-        <li><a routerLink="/why-component" routerLinkActive="active">Why did you survive?</a></li>
-        <li><a routerLink="/about-component" routerLinkActive="active">About the author</a></li>
-      </ul>
-    </div>
-  </nav>
-
-<router-outlet></router-outlet>
-<footer>
-  <div class="container-smoke fit" style="opacity: 0.8;">
-    <p>This site is a non-profit memorial for my grandfather - kalman. All rights are reserved to him. </p>
-  </div>
+<footer class="app-footer">
+  <p>This site is a non-profit memorial for Kalman Gochman (1922–2007). All rights reserved.</p>
 </footer>

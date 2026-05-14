@@ -1,131 +1,41 @@
-
-.navbar{
-    background-color:#333 ;
-}
-.toolbar {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 60px;
-    display: flex;
-    align-items: center;
-    background-color: #333;
-    color: white;
-    font-weight: 600;
-  }
-  .toolbar img {
-    margin: 0 16px;
-  }
-  ul{
-      height: 100%;
-  }
-
-
-* {
-    box-sizing: border-box;
-    overflow: visible;
+.app-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background-color: #1a1a1a !important;
 }
 
-body {
-    margin: 0;
-    padding: 0;
+.brand {
+  font-size: 1.3rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
 }
 
-.navbar {
-    display: flex;
-    position: relative;
-    justify-content: space-between;
-    align-items: center;
-    background-color: #333;
-    color: white;
+.spacer {
+  flex: 1;
 }
 
-.brand-title {
-    font-size: 1.5rem;
-    margin: .5rem;
+a.active-link {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
 }
 
-.navbar-links {
-    height: 100%;
+.page-content {
+  min-height: calc(100vh - 120px);
+  padding: 2rem 1rem;
+  display: flex;
+  justify-content: center;
 }
 
-.navbar-links ul {
-    display: flex;
-    margin: 0;
-    padding: 0;
+.app-footer {
+  text-align: center;
+  padding: 1rem;
+  background: rgba(26, 26, 26, 0.85);
+  color: #ccc;
+  font-size: 0.85rem;
 }
 
-.navbar-links li {
-    list-style: none;
-}
-
-.navbar-links li a {
-    display: block;
-    text-decoration: none;
-    color: white;
-    padding: 1rem;
-}
-
-.navbar-links li:hover {
-    background-color: #555;
-}
-
-.toggle-button {
-    position: absolute;
-    top: .75rem;
-    right: 1rem;
-    display: none;
-    flex-direction: column;
-    justify-content: space-between;
-    width: 30px;
-    height: 21px;
-}
-
-.toggle-button .bar {
-    height: 3px;
-    width: 100%;
-    background-color: white;
-    border-radius: 10px;
-}
-
-@media (max-width: 800px) {
-    .navbar {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .toggle-button {
-        display: flex;
-    }
-
-    .navbar-links {
-        display: none;
-        width: 100%;
-    }
-
-    .navbar-links ul {
-        width: 100%;
-        flex-direction: column;
-    }
-
-    .navbar-links ul li {
-        text-align: center;
-    }
-
-    .navbar-links ul li a {
-        padding: .5rem 1rem;
-    }
-
-    .navbar-links.active {
-        display: flex;
-    }
-}
-
-
-.log{
-    margin: inherit;
-}
-.first{
-    margin: 0.5% 0.8% 0.5% 0.8%;
+.app-footer p {
+  margin: 0;
+  color: #ccc;
 }

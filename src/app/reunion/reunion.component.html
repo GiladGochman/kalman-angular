@@ -1,4 +1,47 @@
-<!-- <p>reunion works!</p> -->
-<!-- <div class="container"> -->
-    <object data="../../assets/book.pdf" type="application/pdf" style="max-width: 1000px;height:85vh;width:90vw"></object>
-<!-- </div> -->
+@if (error()) {
+  <mat-card class="error-card">
+    <mat-card-content>
+      <p>{{ error() }}</p>
+      <p>Start the backend server: <code>cd server &amp;&amp; npm run dev</code></p>
+    </mat-card-content>
+  </mat-card>
+} @else if (!metadata()) {
+  <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+} @else {
+  <div class="viewer-shell">
+
+    <mat-toolbar class="nav-bar">
+      <button mat-icon-button (click)="prevPage()" [disabled]="currentPage() <= 1" aria-label="Previous page">
+        <mat-icon>chevron_left</mat-icon>
+      </button>
+
+      <span class="page-info">
+        Page
+        <input class="page-input" type="number" [value]="currentPage()"
+               (change)="goToPage($event)"
+               [min]="1" [max]="metadata()!.totalPages" />
+        of {{ metadata()!.totalPages }}
+      </span>
+
+      <button mat-icon-button (click)="nextPage()" [disabled]="currentPage() >= metadata()!.totalPages" aria-label="Next page">
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+    </mat-toolbar>
+
+    @if (isLoading()) {
+      <mat-progress-bar mode="indeterminate" class="loading-bar"></mat-progress-bar>
+    }
+
+    <div class="tile-grid"
+         [style.grid-template-columns]="'repeat(' + metadata()!.tileCols + ', 1fr)'"
+         [style.grid-template-rows]="'repeat(' + metadata()!.tileRows + ', auto)'">
+      @for (tile of tileSlots(); track tile.key) {
+        <canvas #tileCanvas
+                [width]="tileWidth()"
+                [height]="tileHeight()">
+        </canvas>
+      }
+    </div>
+
+  </div>
+}

@@ -1,0 +1,11 @@
+.why-card {
+  max-width: 800px;
+  width: 100%;
+  background: rgba(30, 30, 30, 0.88) !important;
+  color: white !important;
+  border-radius: 12px !important;
+}
+
+.why-card p {
+  color: #e0e0e0;
+}
