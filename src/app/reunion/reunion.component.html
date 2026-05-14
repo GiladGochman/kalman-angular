@@ -38,7 +38,8 @@
       @for (tile of tileSlots(); track tile.key) {
         <canvas #tileCanvas
                 [width]="tileWidth()"
-                [height]="tileHeight()">
+                [height]="tileHeight()"
+                (contextmenu)="$event.preventDefault()">
         </canvas>
       }
     </div>

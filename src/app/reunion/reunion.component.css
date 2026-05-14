@@ -41,17 +41,23 @@
 .tile-grid {
   display: grid;
   width: 100%;
+  gap: 0;
   border: 1px solid #333;
   border-top: none;
   border-radius: 0 0 8px 8px;
   overflow: hidden;
   background: #111;
+  line-height: 0;
+  font-size: 0;
 }
 
 .tile-grid canvas {
   display: block;
   width: 100%;
   height: auto;
+  margin: 0;
+  padding: 0;
+  vertical-align: top;
 }
 
 .error-card {
