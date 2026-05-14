@@ -191,12 +191,8 @@ export class ReunionComponent implements OnInit, AfterViewInit, OnDestroy {
     const wrapper = this.canvasWrapper?.nativeElement;
     if (!canvas || !wrapper) return;
 
-    const availH      = window.innerHeight - CHROME_HEIGHT;
-    const aspectRatio = canvas.width / canvas.height;
-    const fitW        = Math.round(availH * aspectRatio);
     const containerW  = wrapper.clientWidth;
-    const baseW       = Math.min(fitW, containerW);
-    const displayW    = Math.round(baseW * this.zoom());
+    const displayW    = Math.round(containerW * this.zoom());
 
     canvas.style.width  = displayW + 'px';
     canvas.style.height = 'auto';
