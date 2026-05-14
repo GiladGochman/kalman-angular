@@ -1,5 +1,5 @@
 import {
-  Component, OnInit, AfterViewInit, OnDestroy,
+  Component, OnInit,
   signal, ViewChild, ElementRef, HostListener,
 } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
@@ -46,8 +46,6 @@ const T = {
 const ZOOM_STEP = 0.25;
 const ZOOM_MIN  = 0.5;
 const ZOOM_MAX  = 3.0;
-const CHROME_HEIGHT = 204;
-
 @Component({
   selector: 'app-reunion',
   standalone: true,
@@ -55,7 +53,7 @@ const CHROME_HEIGHT = 204;
   templateUrl: './reunion.component.html',
   styleUrls: ['./reunion.component.css'],
 })
-export class ReunionComponent implements OnInit, AfterViewInit, OnDestroy {
+export class ReunionComponent implements OnInit {
   @ViewChild('pageCanvas')   pageCanvas!:   ElementRef<HTMLCanvasElement>;
   @ViewChild('canvasWrapper') canvasWrapper!: ElementRef<HTMLDivElement>;
 
@@ -85,9 +83,6 @@ export class ReunionComponent implements OnInit, AfterViewInit, OnDestroy {
       error: () => this.error.set('Could not connect to book server. Make sure it is running.'),
     });
   }
-
-  ngAfterViewInit(): void {}
-  ngOnDestroy(): void {}
 
   openBook(): void {
     this.showCover.set(false);

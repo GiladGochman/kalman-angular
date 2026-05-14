@@ -29,7 +29,7 @@
               "src/assets"
             ],
             "styles": [
-              "node_modules/flag-icons/css/flag-icons.min.css",
+              "src/flag-icons-4x3.css",
               "src/styles.css"
             ],
             "scripts": []
