@@ -1,6 +1,6 @@
 import {
-  Component, OnInit, AfterViewInit,
-  signal, ViewChild, ElementRef,
+  Component, OnInit, AfterViewInit, OnDestroy,
+  signal, ViewChild, ElementRef, HostListener,
 } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { forkJoin } from 'rxjs';
@@ -10,12 +10,43 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatCardModule } from '@angular/material/card';
+import { LanguageService } from '../language.service';
 
 const XOR_KEY = 0xA7;
 
-interface PdfMetadata {
-  totalPages: number;
-}
+interface PdfMetadata { totalPages: number; }
+
+interface HelpTip { icon: string; text: string; }
+
+const T = {
+  en: {
+    page: 'Page', of: 'of',
+    openBook: 'Open Book',
+    coverAlt: 'Class Reunion — Cover',
+    helpTips: [
+      { icon: 'chevron_left',  text: 'Use the arrow buttons (or ← → keys) to turn pages.' },
+      { icon: 'zoom_in',       text: 'Use + / − to zoom in and out. Click the fit-screen icon to reset.' },
+      { icon: 'pan_tool',      text: 'When zoomed in, click and drag to scroll the page.' },
+      { icon: 'input',         text: 'Type a page number in the box and press Enter to jump directly.' },
+    ] as HelpTip[],
+  },
+  he: {
+    page: 'עמוד', of: 'מתוך',
+    openBook: 'פתח את הספר',
+    coverAlt: 'פגישת מחזור — עטיפה',
+    helpTips: [
+      { icon: 'chevron_left',  text: 'השתמש בחצים (או במקשי ← →) להפיכת עמודים.' },
+      { icon: 'zoom_in',       text: 'השתמש ב‑ + / − להגדלה והקטנה. לחץ על אייקון ההתאמה לאיפוס.' },
+      { icon: 'pan_tool',      text: 'בעת הגדלה, לחץ וגרור כדי לגלול את העמוד.' },
+      { icon: 'input',         text: 'הקלד מספר עמוד בתיבה ולחץ Enter כדי לקפוץ ישירות.' },
+    ] as HelpTip[],
+  },
+};
+
+const ZOOM_STEP = 0.25;
+const ZOOM_MIN  = 0.5;
+const ZOOM_MAX  = 3.0;
+const CHROME_HEIGHT = 204;
 
 @Component({
   selector: 'app-reunion',
@@ -24,27 +55,89 @@ interface PdfMetadata {
   templateUrl: './reunion.component.html',
   styleUrls: ['./reunion.component.css'],
 })
-export class ReunionComponent implements OnInit, AfterViewInit {
-  @ViewChild('pageCanvas') pageCanvas!: ElementRef<HTMLCanvasElement>;
+export class ReunionComponent implements OnInit, AfterViewInit, OnDestroy {
+  @ViewChild('pageCanvas')   pageCanvas!:   ElementRef<HTMLCanvasElement>;
+  @ViewChild('canvasWrapper') canvasWrapper!: ElementRef<HTMLDivElement>;
 
-  metadata = signal<PdfMetadata | null>(null);
+  metadata    = signal<PdfMetadata | null>(null);
   currentPage = signal(1);
-  isLoading = signal(false);
-  error = signal<string | null>(null);
+  isLoading   = signal(false);
+  error       = signal<string | null>(null);
+  showCover   = signal(true);
+  zoom        = signal(1.0);
+  showHelp    = signal(false);
 
-  constructor(private http: HttpClient) {}
+  // drag state
+  isDragging  = false;
+  private dragStartX = 0;
+  private dragStartY = 0;
+  private scrollStartX = 0;
+  private scrollStartY = 0;
+
+  constructor(private http: HttpClient, public langSvc: LanguageService) {}
+
+  get t() { return T[this.langSvc.lang()]; }
+  get zoomPct() { return Math.round(this.zoom() * 100) + '%'; }
 
   ngOnInit(): void {
     this.http.get<PdfMetadata>('/api/metadata').subscribe({
-      next: (data) => {
-        this.metadata.set(data);
-        this.loadPage(1);
-      },
+      next:  (data) => this.metadata.set(data),
       error: () => this.error.set('Could not connect to book server. Make sure it is running.'),
     });
   }
 
   ngAfterViewInit(): void {}
+  ngOnDestroy(): void {}
+
+  openBook(): void {
+    this.showCover.set(false);
+    this.loadPage(1);
+  }
+
+  toggleHelp(): void { this.showHelp.set(!this.showHelp()); }
+
+  // ── Drag to scroll ───────────────────────────────────────────────────────────
+
+  onMouseDown(e: MouseEvent): void {
+    this.isDragging   = true;
+    this.dragStartX   = e.clientX;
+    this.dragStartY   = e.clientY;
+    const el = this.canvasWrapper.nativeElement;
+    this.scrollStartX = el.scrollLeft;
+    this.scrollStartY = el.scrollTop;
+    e.preventDefault();
+  }
+
+  onMouseMove(e: MouseEvent): void {
+    if (!this.isDragging) return;
+    const el = this.canvasWrapper.nativeElement;
+    el.scrollLeft = this.scrollStartX - (e.clientX - this.dragStartX);
+    el.scrollTop  = this.scrollStartY - (e.clientY - this.dragStartY);
+  }
+
+  onMouseUp(): void { this.isDragging = false; }
+
+  // ── Keyboard navigation ──────────────────────────────────────────────────────
+
+  @HostListener('document:keydown', ['$event'])
+  onKey(event: KeyboardEvent): void {
+    if (this.showCover() || !this.metadata()) return;
+    if (event.key === 'ArrowRight') this.prevPage();
+    else if (event.key === 'ArrowLeft') this.nextPage();
+  }
+
+  // ── Zoom ─────────────────────────────────────────────────────────────────────
+
+  zoomIn():    void { this.setZoom(Math.min(ZOOM_MAX, +(this.zoom() + ZOOM_STEP).toFixed(2))); }
+  zoomOut():   void { this.setZoom(Math.max(ZOOM_MIN, +(this.zoom() - ZOOM_STEP).toFixed(2))); }
+  zoomReset(): void { this.setZoom(1.0); }
+
+  private setZoom(z: number): void {
+    this.zoom.set(z);
+    this.applyCanvasSize();
+  }
+
+  // ── Page loading ─────────────────────────────────────────────────────────────
 
   loadPage(page: number): void {
     const m = this.metadata();
@@ -53,7 +146,8 @@ export class ReunionComponent implements OnInit, AfterViewInit {
     this.currentPage.set(page);
     this.isLoading.set(true);
 
-    this.http.get<{ width: number; height: number; tileRows: number; tileCols: number }>(`/api/page/${page}/info`).subscribe({
+    this.http.get<{ width: number; height: number; tileRows: number; tileCols: number }>
+        (`/api/page/${page}/info`).subscribe({
       next: (info) => {
         const tileCount = info.tileRows * info.tileCols;
         const fetches = Array.from({ length: tileCount }, (_, i) => {
@@ -63,20 +157,11 @@ export class ReunionComponent implements OnInit, AfterViewInit {
         });
 
         forkJoin(fetches).subscribe({
-          next: (blobs) => {
-            this.isLoading.set(false);
-            this.renderTilesToCanvas(blobs, info.width, info.height, info.tileRows, info.tileCols);
-          },
-          error: () => {
-            this.isLoading.set(false);
-            this.error.set('Failed to load page tiles.');
-          },
+          next:  (blobs) => { this.isLoading.set(false); this.renderTilesToCanvas(blobs, info.width, info.height, info.tileRows, info.tileCols); },
+          error: () => { this.isLoading.set(false); this.error.set('Failed to load page tiles.'); },
         });
       },
-      error: () => {
-        this.isLoading.set(false);
-        this.error.set('Failed to load page info.');
-      },
+      error: () => { this.isLoading.set(false); this.error.set('Failed to load page info.'); },
     });
   }
 
@@ -86,26 +171,41 @@ export class ReunionComponent implements OnInit, AfterViewInit {
     const canvas = this.pageCanvas?.nativeElement;
     if (!canvas) return;
 
-    canvas.width = pageW;
+    canvas.width  = pageW;
     canvas.height = pageH;
 
-    const ctx = canvas.getContext('2d')!;
+    const ctx   = canvas.getContext('2d')!;
     const tileW = Math.ceil(pageW / tileCols);
     const tileH = Math.ceil(pageH / tileRows);
-
-    const decoded = await Promise.all(blobs.map(blob => this.decodeBlob(blob)));
+    const decoded = await Promise.all(blobs.map(b => this.decodeBlob(b)));
 
     for (let i = 0; i < decoded.length; i++) {
-      const row = Math.floor(i / tileCols);
-      const col = i % tileCols;
-      ctx.putImageData(decoded[i], col * tileW, row * tileH);
+      ctx.putImageData(decoded[i], (i % tileCols) * tileW, Math.floor(i / tileCols) * tileH);
     }
+
+    this.applyCanvasSize();
+  }
+
+  private applyCanvasSize(): void {
+    const canvas  = this.pageCanvas?.nativeElement;
+    const wrapper = this.canvasWrapper?.nativeElement;
+    if (!canvas || !wrapper) return;
+
+    const availH      = window.innerHeight - CHROME_HEIGHT;
+    const aspectRatio = canvas.width / canvas.height;
+    const fitW        = Math.round(availH * aspectRatio);
+    const containerW  = wrapper.clientWidth;
+    const baseW       = Math.min(fitW, containerW);
+    const displayW    = Math.round(baseW * this.zoom());
+
+    canvas.style.width  = displayW + 'px';
+    canvas.style.height = 'auto';
   }
 
   private async decodeBlob(blob: Blob): Promise<ImageData> {
-    const bitmap = await createImageBitmap(blob);
+    const bitmap    = await createImageBitmap(blob);
     const offscreen = document.createElement('canvas');
-    offscreen.width = bitmap.width;
+    offscreen.width  = bitmap.width;
     offscreen.height = bitmap.height;
     const ctx = offscreen.getContext('2d')!;
     ctx.drawImage(bitmap, 0, 0);
@@ -119,7 +219,7 @@ export class ReunionComponent implements OnInit, AfterViewInit {
     const pixelCount = d.length / 4;
     for (let i = 0; i < pixelCount; i++) {
       const salt = (i * 31) & 0xFF;
-      const key = XOR_KEY ^ salt;
+      const key  = XOR_KEY ^ salt;
       const base = i * 4;
       d[base]     ^= key;
       d[base + 1] ^= key;

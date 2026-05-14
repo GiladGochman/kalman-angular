@@ -1,15 +1,19 @@
-<mat-toolbar color="primary" class="app-toolbar">
-  <span class="brand">Kalman Gochman</span>
+<mat-toolbar color="primary" class="app-toolbar" [dir]="isHe ? 'rtl' : 'ltr'">
+  <span class="brand">{{ t.brand }}</span>
   <span class="spacer"></span>
-  <a mat-button routerLink="/book" routerLinkActive="active-link">"Class Reunion"</a>
-  <a mat-button routerLink="/why" routerLinkActive="active-link">Why did you survive?</a>
-  <a mat-button routerLink="/about" routerLinkActive="active-link">About the author</a>
+  <a mat-button routerLink="/book" routerLinkActive="active-link">{{ t.book }}</a>
+  <a mat-button routerLink="/why" routerLinkActive="active-link">{{ t.why }}</a>
+  <a mat-button routerLink="/about" routerLinkActive="active-link">{{ t.about }}</a>
+  <button mat-button class="lang-btn" (click)="toggle()">
+    <img [src]="t.flagSrc" [alt]="t.langLabel" class="flag-icon" />
+    {{ t.langLabel }}
+  </button>
 </mat-toolbar>
 
 <main class="page-content">
   <router-outlet></router-outlet>
 </main>
 
-<footer class="app-footer">
-  <p>This site is a non-profit memorial for Kalman Gochman (1922–2007). All rights reserved.</p>
+<footer class="app-footer" [dir]="isHe ? 'rtl' : 'ltr'">
+  <p>{{ t.footer }}</p>
 </footer>

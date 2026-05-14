@@ -7,6 +7,13 @@
   </mat-card>
 } @else if (!metadata()) {
   <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+} @else if (showCover()) {
+  <div class="cover-wrapper">
+    <img src="assets/reunion.jpg" [alt]="t.coverAlt" class="cover-image" (contextmenu)="$event.preventDefault()" />
+    <button mat-raised-button color="primary" class="open-btn" (click)="openBook()">
+      {{ t.openBook }}
+    </button>
+  </div>
 } @else {
   <div class="viewer-shell">
 
@@ -16,26 +23,62 @@
       </button>
 
       <span class="page-info">
-        Page
+        {{ t.page }}
         <input class="page-input" type="number" [value]="currentPage()"
                (change)="goToPage($event)"
                [min]="1" [max]="metadata()!.totalPages" />
-        of {{ metadata()!.totalPages }}
+        {{ t.of }} {{ metadata()!.totalPages }}
       </span>
 
       <button mat-icon-button (click)="nextPage()" [disabled]="currentPage() >= metadata()!.totalPages" aria-label="Next page">
         <mat-icon>chevron_right</mat-icon>
       </button>
+
+      <span class="nav-divider"></span>
+
+      <button mat-icon-button (click)="zoomOut()" [disabled]="zoom() <= 0.5" aria-label="Zoom out">
+        <mat-icon>zoom_out</mat-icon>
+      </button>
+
+      <span class="zoom-label">{{ zoomPct }}</span>
+
+      <button mat-icon-button (click)="zoomIn()" [disabled]="zoom() >= 3" aria-label="Zoom in">
+        <mat-icon>zoom_in</mat-icon>
+      </button>
+
+      <button mat-icon-button (click)="zoomReset()" aria-label="Reset zoom" title="Reset zoom">
+        <mat-icon>fit_screen</mat-icon>
+      </button>
+
+      <span class="nav-divider"></span>
+
+      <button mat-icon-button (click)="toggleHelp()" [class.help-active]="showHelp()" aria-label="Help">
+        <mat-icon>help_outline</mat-icon>
+      </button>
     </mat-toolbar>
+
+    @if (showHelp()) {
+      <div class="help-panel" [dir]="langSvc.lang() === 'he' ? 'rtl' : 'ltr'">
+        @for (tip of t.helpTips; track $index) {
+          <div class="help-tip">
+            <mat-icon class="tip-icon">{{ tip.icon }}</mat-icon>
+            <span>{{ tip.text }}</span>
+          </div>
+        }
+      </div>
+    }
 
     @if (isLoading()) {
       <mat-progress-bar mode="indeterminate" class="loading-bar"></mat-progress-bar>
     }
 
-    <div class="canvas-wrapper">
-      <canvas #pageCanvas
-              (contextmenu)="$event.preventDefault()">
-      </canvas>
+    <div class="canvas-wrapper" #canvasWrapper
+         [class.dragging]="isDragging"
+         (mousedown)="onMouseDown($event)"
+         (mousemove)="onMouseMove($event)"
+         (mouseup)="onMouseUp()"
+         (mouseleave)="onMouseUp()">
+      <canvas #pageCanvas (contextmenu)="$event.preventDefault()"></canvas>
     </div>
 
   </div>
