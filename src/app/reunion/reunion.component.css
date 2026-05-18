@@ -114,8 +114,8 @@
 }
 
 .cover-image {
-  max-width: min(900px, 92vw);
-  max-height: 85vh;
+  max-width: min(900px, 90vw);
+  max-height: 80vh;
   width: auto;
   height: auto;
   border-radius: 10px;
