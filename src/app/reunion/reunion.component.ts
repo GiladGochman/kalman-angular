@@ -112,7 +112,7 @@ export class ReunionComponent implements OnInit {
   private scrollStartX = 0;
   private scrollStartY = 0;
 
-  public pdfUrl = environment.BOOK_PDF_URL;
+  public pdfUrl = environment.REUNION_PDF_URL;
   constructor(
     private http: HttpClient,
     public langSvc: LanguageService,
