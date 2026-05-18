@@ -116,6 +116,26 @@ export class ReunionComponent implements OnInit {
 
   onMouseUp(): void { this.isDragging = false; }
 
+  onTouchStart(e: TouchEvent): void {
+    if (e.touches.length !== 1) return;
+    this.isDragging   = true;
+    this.dragStartX   = e.touches[0].clientX;
+    this.dragStartY   = e.touches[0].clientY;
+    const el = this.canvasWrapper.nativeElement;
+    this.scrollStartX = el.scrollLeft;
+    this.scrollStartY = el.scrollTop;
+  }
+
+  onTouchMove(e: TouchEvent): void {
+    if (!this.isDragging || e.touches.length !== 1) return;
+    e.preventDefault();
+    const el = this.canvasWrapper.nativeElement;
+    el.scrollLeft = this.scrollStartX - (e.touches[0].clientX - this.dragStartX);
+    el.scrollTop  = this.scrollStartY - (e.touches[0].clientY - this.dragStartY);
+  }
+
+  onTouchEnd(): void { this.isDragging = false; }
+
   // ── Keyboard navigation ──────────────────────────────────────────────────────
 
   @HostListener('document:keydown', ['$event'])

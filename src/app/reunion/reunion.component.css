@@ -95,6 +95,7 @@
   max-height: calc(100vh - 148px);
   cursor: grab;
   user-select: none;
+  touch-action: none;
 }
 
 .canvas-wrapper.dragging {
@@ -167,6 +168,36 @@
   font-size: 1.3rem !important;
   width: 1.3rem !important;
   height: 1.3rem !important;
+}
+
+@media (max-width: 600px) {
+  .nav-bar {
+    height: auto !important;
+    min-height: 48px;
+    padding: 4px 2px !important;
+  }
+
+  .nav-divider {
+    display: none;
+  }
+
+  .zoom-label {
+    min-width: 32px;
+    font-size: 0.75rem;
+  }
+
+  .page-info {
+    font-size: 0.8rem;
+  }
+
+  .page-input {
+    width: 40px;
+    font-size: 0.8rem;
+  }
+
+  .canvas-wrapper {
+    max-height: calc(100vh - 180px);
+  }
 }
 
 .error-card {

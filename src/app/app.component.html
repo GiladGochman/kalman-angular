@@ -1,14 +1,36 @@
 <mat-toolbar color="primary" class="app-toolbar" [dir]="isHe ? 'rtl' : 'ltr'">
   <span class="brand">{{ t.brand }}</span>
   <span class="spacer"></span>
-  <a mat-button routerLink="/book" routerLinkActive="active-link">{{ t.book }}</a>
-  <a mat-button routerLink="/why" routerLinkActive="active-link">{{ t.why }}</a>
-  <a mat-button routerLink="/about" routerLinkActive="active-link">{{ t.about }}</a>
-  <button mat-button class="lang-btn" (click)="toggle()">
-    <img [src]="t.flagSrc" [alt]="t.langLabel" class="flag-icon" />
-    {{ t.langLabel }}
-  </button>
+
+  <!-- Desktop nav -->
+  <div class="desktop-nav">
+    <a mat-button routerLink="/book" routerLinkActive="active-link">{{ t.book }}</a>
+    <a mat-button routerLink="/why" routerLinkActive="active-link">{{ t.why }}</a>
+    <a mat-button routerLink="/about" routerLinkActive="active-link">{{ t.about }}</a>
+    <button mat-button class="lang-btn" (click)="toggle()">
+      <img [src]="t.flagSrc" [alt]="t.langLabel" class="flag-icon" />
+      {{ t.langLabel }}
+    </button>
+  </div>
+
+  <!-- Mobile nav -->
+  <div class="mobile-nav">
+    <button mat-button class="lang-btn" (click)="toggle()">
+      <img [src]="t.flagSrc" [alt]="t.langLabel" class="flag-icon" />
+    </button>
+    <button mat-icon-button (click)="menuOpen = !menuOpen" aria-label="Menu">
+      <mat-icon>{{ menuOpen ? 'close' : 'menu' }}</mat-icon>
+    </button>
+  </div>
 </mat-toolbar>
+
+@if (menuOpen) {
+  <div class="mobile-menu" [dir]="isHe ? 'rtl' : 'ltr'" (click)="menuOpen = false">
+    <a mat-button routerLink="/book" routerLinkActive="active-link">{{ t.book }}</a>
+    <a mat-button routerLink="/why" routerLinkActive="active-link">{{ t.why }}</a>
+    <a mat-button routerLink="/about" routerLinkActive="active-link">{{ t.about }}</a>
+  </div>
+}
 
 <main class="page-content">
   <router-outlet></router-outlet>
