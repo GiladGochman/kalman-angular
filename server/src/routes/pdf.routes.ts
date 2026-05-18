@@ -7,11 +7,18 @@ import { encodeTile } from '../services/obfuscator.service';
 import { getCachedTile, saveTile } from '../services/cache.service';
 
 const router = Router();
-const pdfName = path.basename(config.pdfPath, '.pdf');
 
-router.get('/metadata', async (_req: Request, res: Response) => {
+function getPdfPath(book: string): string | null {
+  if (book === 'book') return config.pdfPath;
+  if (book === 'why') return config.whyPdfPath;
+  return null;
+}
+
+router.get('/:book/metadata', async (req: Request, res: Response) => {
+  const pdfPath = getPdfPath(req.params['book']);
+  if (!pdfPath) { res.status(404).json({ error: 'Unknown book' }); return; }
   try {
-    const info = await getPdfInfo(config.pdfPath);
+    const info = await getPdfInfo(pdfPath);
     const scale = 1.5;
     res.json({
       totalPages: info.totalPages,
@@ -26,18 +33,23 @@ router.get('/metadata', async (_req: Request, res: Response) => {
   }
 });
 
-router.get('/page/:pageNum/info', async (req: Request, res: Response) => {
+router.get('/:book/page/:pageNum/info', async (req: Request, res: Response) => {
+  const pdfPath = getPdfPath(req.params['book']);
+  if (!pdfPath) { res.status(404).json({ error: 'Unknown book' }); return; }
   const pageNum = parseInt(req.params['pageNum'], 10);
   if (isNaN(pageNum)) { res.status(400).json({ error: 'Invalid page' }); return; }
   try {
-    const dims = await getPageDimensions(config.pdfPath, pageNum, 1.5);
+    const dims = await getPageDimensions(pdfPath, pageNum, 1.5);
     res.json({ ...dims, tileRows: config.tileRows, tileCols: config.tileCols });
   } catch (e) {
     res.status(500).json({ error: String(e) });
   }
 });
 
-router.get('/page/:pageNum/tile/:row/:col', async (req: Request, res: Response) => {
+router.get('/:book/page/:pageNum/tile/:row/:col', async (req: Request, res: Response) => {
+  const pdfPath = getPdfPath(req.params['book']);
+  if (!pdfPath) { res.status(404).json({ error: 'Unknown book' }); return; }
+  const book = req.params['book'];
   const pageNum = parseInt(req.params['pageNum'], 10);
   const row = parseInt(req.params['row'], 10);
   const col = parseInt(req.params['col'], 10);
@@ -48,6 +60,7 @@ router.get('/page/:pageNum/tile/:row/:col', async (req: Request, res: Response) 
   }
 
   try {
+    const pdfName = `${book}-${path.basename(pdfPath, '.pdf')}`;
     const cached = getCachedTile(pdfName, pageNum, row, col);
     if (cached) {
       res.set('Content-Type', 'image/png');
@@ -56,7 +69,7 @@ router.get('/page/:pageNum/tile/:row/:col', async (req: Request, res: Response) 
       return;
     }
 
-    const pageBuffer = await renderPage(config.pdfPath, pageNum, 1.5);
+    const pageBuffer = await renderPage(pdfPath, pageNum, 1.5);
     const tiles = await splitIntoTiles(pageBuffer);
 
     if (row >= config.tileRows || col >= config.tileCols) {
@@ -64,7 +77,6 @@ router.get('/page/:pageNum/tile/:row/:col', async (req: Request, res: Response) 
       return;
     }
 
-    // Encode and cache all tiles for this page at once
     for (let r = 0; r < config.tileRows; r++) {
       for (let c = 0; c < config.tileCols; c++) {
         const encoded = await encodeTile(tiles[r][c].buffer);

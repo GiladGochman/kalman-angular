@@ -64,8 +64,8 @@ export class ReunionComponent implements OnInit {
   showCover   = signal(true);
   zoom        = signal(1.0);
   showHelp    = signal(false);
+  isOpening   = signal(false);
 
-  // drag state
   isDragging  = false;
   private dragStartX = 0;
   private dragStartY = 0;
@@ -78,15 +78,19 @@ export class ReunionComponent implements OnInit {
   get zoomPct() { return Math.round(this.zoom() * 100) + '%'; }
 
   ngOnInit(): void {
-    this.http.get<PdfMetadata>('/api/metadata').subscribe({
+    this.http.get<PdfMetadata>('/api/book/metadata').subscribe({
       next:  (data) => this.metadata.set(data),
       error: () => this.error.set('Could not connect to book server. Make sure it is running.'),
     });
   }
 
   openBook(): void {
-    this.showCover.set(false);
-    this.loadPage(1);
+    this.isOpening.set(true);
+    setTimeout(() => {
+      this.isOpening.set(false);
+      this.showCover.set(false);
+      this.loadPage(1);
+    }, 1400);
   }
 
   toggleHelp(): void { this.showHelp.set(!this.showHelp()); }
@@ -142,13 +146,13 @@ export class ReunionComponent implements OnInit {
     this.isLoading.set(true);
 
     this.http.get<{ width: number; height: number; tileRows: number; tileCols: number }>
-        (`/api/page/${page}/info`).subscribe({
+        (`/api/book/page/${page}/info`).subscribe({
       next: (info) => {
         const tileCount = info.tileRows * info.tileCols;
         const fetches = Array.from({ length: tileCount }, (_, i) => {
           const row = Math.floor(i / info.tileCols);
           const col = i % info.tileCols;
-          return this.http.get(`/api/page/${page}/tile/${row}/${col}`, { responseType: 'blob' });
+          return this.http.get(`/api/book/page/${page}/tile/${row}/${col}`, { responseType: 'blob' });
         });
 
         forkJoin(fetches).subscribe({

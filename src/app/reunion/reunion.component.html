@@ -9,8 +9,9 @@
   <mat-progress-bar mode="indeterminate"></mat-progress-bar>
 } @else if (showCover()) {
   <div class="cover-wrapper">
-    <img src="assets/reunion.jpg" [alt]="t.coverAlt" class="cover-image" (contextmenu)="$event.preventDefault()" />
-    <button mat-raised-button color="primary" class="open-btn" (click)="openBook()">
+    <img src="assets/reunion cover.jpg" [alt]="t.coverAlt" class="cover-image" (contextmenu)="$event.preventDefault()" />
+    <button mat-raised-button color="primary" class="open-btn" [class.opening]="isOpening()" (click)="openBook()">
+      <mat-icon class="btn-icon">menu_book</mat-icon>
       {{ t.openBook }}
     </button>
   </div>

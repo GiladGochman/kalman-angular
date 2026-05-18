@@ -9,6 +9,11 @@ export const config = {
     '..',
     process.env['PDF_PATH'] || '../src/assets/pgishat mahzor.pdf',
   ),
+  whyPdfPath: path.resolve(
+    __dirname,
+    '..',
+    process.env['WHY_PDF_PATH'] || '../src/assets/why did you survive.pdf',
+  ),
   cacheDir: path.resolve(
     __dirname,
     '..',
