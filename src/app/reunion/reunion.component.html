@@ -2,58 +2,116 @@
   <mat-card class="error-card">
     <mat-card-content>
       <p>{{ error() }}</p>
-      <p>Start the backend server: <code>cd server &amp;&amp; npm run dev</code></p>
+      <p>
+        Start the backend server: <code>cd server &amp;&amp; npm run dev</code>
+      </p>
     </mat-card-content>
   </mat-card>
 } @else if (!metadata()) {
   <mat-progress-bar mode="indeterminate"></mat-progress-bar>
 } @else if (showCover()) {
   <div class="cover-wrapper">
-    <img src="assets/reunion cover.jpg" [alt]="t.coverAlt" class="cover-image" (contextmenu)="$event.preventDefault()" />
-    <button mat-raised-button color="primary" class="open-btn" [class.opening]="isOpening()" (click)="openBook()">
+    <img
+      src="assets/reunion cover.jpg"
+      [alt]="t.coverAlt"
+      class="cover-image"
+      (contextmenu)="$event.preventDefault()"
+    />
+    <button
+      mat-raised-button
+      color="primary"
+      class="open-btn"
+      [class.opening]="isOpening()"
+      (click)="openBook()"
+    >
       <mat-icon class="btn-icon">menu_book</mat-icon>
       {{ t.openBook }}
     </button>
+    <a
+      mat-raised-button
+      color="accent"
+      class="download-btn"
+      [href]="pdfUrl"
+      target="_blank"
+      rel="noopener"
+    >
+      <mat-icon class="btn-icon">download</mat-icon>
+      Download PDF
+    </a>
   </div>
 } @else {
   <div class="viewer-shell">
-
     <mat-toolbar class="nav-bar">
-      <button mat-icon-button (click)="prevPage()" [disabled]="currentPage() <= 1" aria-label="Previous page">
+      <button
+        mat-icon-button
+        (click)="prevPage()"
+        [disabled]="currentPage() <= 1"
+        aria-label="Previous page"
+      >
         <mat-icon>chevron_left</mat-icon>
       </button>
 
       <span class="page-info">
         {{ t.page }}
-        <input class="page-input" type="number" [value]="currentPage()"
-               (change)="goToPage($event)"
-               [min]="1" [max]="metadata()!.totalPages" />
+        <input
+          class="page-input"
+          type="number"
+          [value]="currentPage()"
+          (change)="goToPage($event)"
+          [min]="1"
+          [max]="metadata()!.totalPages"
+        />
         {{ t.of }} {{ metadata()!.totalPages }}
       </span>
 
-      <button mat-icon-button (click)="nextPage()" [disabled]="currentPage() >= metadata()!.totalPages" aria-label="Next page">
+      <button
+        mat-icon-button
+        (click)="nextPage()"
+        [disabled]="currentPage() >= metadata()!.totalPages"
+        aria-label="Next page"
+      >
         <mat-icon>chevron_right</mat-icon>
       </button>
 
       <span class="nav-divider"></span>
 
-      <button mat-icon-button (click)="zoomOut()" [disabled]="zoom() <= 0.5" aria-label="Zoom out">
+      <button
+        mat-icon-button
+        (click)="zoomOut()"
+        [disabled]="zoom() <= 0.5"
+        aria-label="Zoom out"
+      >
         <mat-icon>zoom_out</mat-icon>
       </button>
 
       <span class="zoom-label">{{ zoomPct }}</span>
 
-      <button mat-icon-button (click)="zoomIn()" [disabled]="zoom() >= 3" aria-label="Zoom in">
+      <button
+        mat-icon-button
+        (click)="zoomIn()"
+        [disabled]="zoom() >= 3"
+        aria-label="Zoom in"
+      >
         <mat-icon>zoom_in</mat-icon>
       </button>
 
-      <button mat-icon-button (click)="zoomReset()" aria-label="Reset zoom" title="Reset zoom">
+      <button
+        mat-icon-button
+        (click)="zoomReset()"
+        aria-label="Reset zoom"
+        title="Reset zoom"
+      >
         <mat-icon>fit_screen</mat-icon>
       </button>
 
       <span class="nav-divider"></span>
 
-      <button mat-icon-button (click)="toggleHelp()" [class.help-active]="showHelp()" aria-label="Help">
+      <button
+        mat-icon-button
+        (click)="toggleHelp()"
+        [class.help-active]="showHelp()"
+        aria-label="Help"
+      >
         <mat-icon>help_outline</mat-icon>
       </button>
     </mat-toolbar>
@@ -70,20 +128,25 @@
     }
 
     @if (isLoading()) {
-      <mat-progress-bar mode="indeterminate" class="loading-bar"></mat-progress-bar>
+      <mat-progress-bar
+        mode="indeterminate"
+        class="loading-bar"
+      ></mat-progress-bar>
     }
 
-    <div class="canvas-wrapper" #canvasWrapper
-         [class.dragging]="isDragging"
-         (mousedown)="onMouseDown($event)"
-         (mousemove)="onMouseMove($event)"
-         (mouseup)="onMouseUp()"
-         (mouseleave)="onMouseUp()"
-         (touchstart)="onTouchStart($event)"
-         (touchmove)="onTouchMove($event)"
-         (touchend)="onTouchEnd()">
+    <div
+      class="canvas-wrapper"
+      #canvasWrapper
+      [class.dragging]="isDragging"
+      (mousedown)="onMouseDown($event)"
+      (mousemove)="onMouseMove($event)"
+      (mouseup)="onMouseUp()"
+      (mouseleave)="onMouseUp()"
+      (touchstart)="onTouchStart($event)"
+      (touchmove)="onTouchMove($event)"
+      (touchend)="onTouchEnd()"
+    >
       <canvas #pageCanvas (contextmenu)="$event.preventDefault()"></canvas>
     </div>
-
   </div>
 }

@@ -3,7 +3,9 @@
 // The list of file replacements can be found in `angular.json`.
 
 export const environment = {
-  production: false
+  production: false,
+  BOOK_PDF_URL: 'https://example.com/pgishat-mahzor.pdf',
+  WHY_PDF_URL: 'https://example.com/why-did-you-survive.pdf',
 };
 
 /*
