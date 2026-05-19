@@ -6,6 +6,8 @@ export const environment = {
   production: false,
   REUNION_PDF_URL: 'https://example.com/pgishat-mahzor.pdf',
   WHY_PDF_URL: 'https://example.com/why-did-you-survive.pdf',
+  // In dev, tiles are still served from the local Express server via /api
+  R2_TILES_BASE_URL: '',
 };
 
 /*

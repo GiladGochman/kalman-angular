@@ -19,8 +19,12 @@ import { environment } from '../../environments/environment';
 
 const XOR_KEY = 0xa7;
 
+interface PageDims { width: number; height: number; }
 interface PdfMetadata {
   totalPages: number;
+  tileRows: number;
+  tileCols: number;
+  pages: PageDims[];
 }
 
 interface HelpTip {
@@ -126,12 +130,9 @@ export class ReunionComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.http.get<PdfMetadata>('/api/book/metadata').subscribe({
+    this.http.get<PdfMetadata>('/assets/book-metadata.json').subscribe({
       next: (data) => this.metadata.set(data),
-      error: () =>
-        this.error.set(
-          'Could not connect to book server. Make sure it is running.',
-        ),
+      error: () => this.error.set('Could not load book metadata.'),
     });
   }
 
@@ -229,46 +230,31 @@ export class ReunionComponent implements OnInit {
     this.currentPage.set(page);
     this.isLoading.set(true);
 
-    this.http
-      .get<{
-        width: number;
-        height: number;
-        tileRows: number;
-        tileCols: number;
-      }>(`/api/book/page/${page}/info`)
-      .subscribe({
-        next: (info) => {
-          const tileCount = info.tileRows * info.tileCols;
-          const fetches = Array.from({ length: tileCount }, (_, i) => {
-            const row = Math.floor(i / info.tileCols);
-            const col = i % info.tileCols;
-            return this.http.get(`/api/book/page/${page}/tile/${row}/${col}`, {
-              responseType: 'blob',
-            });
-          });
+    const dims = m.pages[page - 1];
+    const tileCount = m.tileRows * m.tileCols;
+    const base = environment.R2_TILES_BASE_URL
+      ? `${environment.R2_TILES_BASE_URL}/book`
+      : `/api/book/page/${page}/tile`;
 
-          forkJoin(fetches).subscribe({
-            next: (blobs) => {
-              this.isLoading.set(false);
-              this.renderTilesToCanvas(
-                blobs,
-                info.width,
-                info.height,
-                info.tileRows,
-                info.tileCols,
-              );
-            },
-            error: () => {
-              this.isLoading.set(false);
-              this.error.set('Failed to load page tiles.');
-            },
-          });
-        },
-        error: () => {
-          this.isLoading.set(false);
-          this.error.set('Failed to load page info.');
-        },
-      });
+    const fetches = Array.from({ length: tileCount }, (_, i) => {
+      const row = Math.floor(i / m.tileCols);
+      const col = i % m.tileCols;
+      const url = environment.R2_TILES_BASE_URL
+        ? `${base}/p${page}-r${row}-c${col}.png`
+        : `${base}/${row}/${col}`;
+      return this.http.get(url, { responseType: 'blob' });
+    });
+
+    forkJoin(fetches).subscribe({
+      next: (blobs) => {
+        this.isLoading.set(false);
+        this.renderTilesToCanvas(blobs, dims.width, dims.height, m.tileRows, m.tileCols);
+      },
+      error: () => {
+        this.isLoading.set(false);
+        this.error.set('Failed to load page tiles.');
+      },
+    });
   }
 
   private async renderTilesToCanvas(
