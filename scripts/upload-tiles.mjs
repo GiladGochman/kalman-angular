@@ -29,7 +29,7 @@ if (!process.env.BLOB_READ_WRITE_TOKEN) {
 // Maps local pdfName dirs to the short prefix used by the Angular app
 const DIR_TO_PREFIX = {};
 for (const entry of fs.readdirSync(TILE_CACHE)) {
-  if (entry.startsWith('book-')) DIR_TO_PREFIX[entry] = 'book';
+  if (entry.startsWith('reunion-')) DIR_TO_PREFIX[entry] = 'reunion';
   else if (entry.startsWith('why-')) DIR_TO_PREFIX[entry] = 'why';
 }
 
