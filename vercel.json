@@ -6,11 +6,11 @@
       "config": { "distDir": "dist/Kalman/browser" }
     }
   ],
-  "routes": [
+  "rewrites": [
     {
-      "src": "/api/(.*)",
-      "dest": "https://kalman-server.onrender.com/api/$1"
+      "source": "/api/(.*)",
+      "destination": "https://kalman-server.onrender.com/api/$1"
     },
-    { "src": "/(.*)", "dest": "/index.html" }
+    { "source": "/((?!.*\\.).*)", "destination": "/index.html" }
   ]
 }
