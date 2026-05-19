@@ -58,7 +58,7 @@ async function warmBook({ key, pdfPath }: BookConfig): Promise<void> {
 }
 
 async function main() {
-  await warmBook({ key: 'book', pdfPath: config.pdfPath });
+  await warmBook({ key: 'reunion', pdfPath: config.pdfPath });
   await warmBook({ key: 'why', pdfPath: config.whyPdfPath });
   console.log('\nWarmup complete.');
 }

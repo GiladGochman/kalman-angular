@@ -9,7 +9,7 @@ import { getCachedTile, saveTile } from '../services/cache.service';
 const router = Router();
 
 function getPdfPath(book: string): string | null {
-  if (book === 'book') return config.pdfPath;
+  if (book === 'reunion') return config.pdfPath;
   if (book === 'why') return config.whyPdfPath;
   return null;
 }

@@ -16,7 +16,7 @@ for (const entry of fs.readdirSync(TILE_CACHE)) {
   if (!fs.existsSync(src)) continue;
 
   let dest;
-  if (entry.startsWith('book-')) dest = path.join(ASSETS, 'book-metadata.json');
+  if (entry.startsWith('reunion-')) dest = path.join(ASSETS, 'reunion-metadata.json');
   else if (entry.startsWith('why-')) dest = path.join(ASSETS, 'why-metadata.json');
   else continue;
 

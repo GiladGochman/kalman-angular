@@ -130,9 +130,9 @@ export class ReunionComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.http.get<PdfMetadata>('/assets/book-metadata.json').subscribe({
+    this.http.get<PdfMetadata>('/assets/reunion-metadata.json').subscribe({
       next: (data) => this.metadata.set(data),
-      error: () => this.error.set('Could not load book metadata.'),
+      error: () => this.error.set('Could not load reunion metadata.'),
     });
   }
 
@@ -233,8 +233,8 @@ export class ReunionComponent implements OnInit {
     const dims = m.pages[page - 1];
     const tileCount = m.tileRows * m.tileCols;
     const base = environment.R2_TILES_BASE_URL
-      ? `${environment.R2_TILES_BASE_URL}/book`
-      : `/api/book/page/${page}/tile`;
+      ? `${environment.R2_TILES_BASE_URL}/reunion`
+      : `/api/reunion/page/${page}/tile`;
 
     const fetches = Array.from({ length: tileCount }, (_, i) => {
       const row = Math.floor(i / m.tileCols);
