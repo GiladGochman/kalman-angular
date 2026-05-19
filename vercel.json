@@ -6,5 +6,11 @@
       "config": { "distDir": "dist/Kalman" }
     }
   ],
-  "routes": [{ "src": "/(.*)", "dest": "/index.html" }]
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "https://kalman-server.onrender.com/api/$1"
+    },
+    { "src": "/(.*)", "dest": "/index.html" }
+  ]
 }

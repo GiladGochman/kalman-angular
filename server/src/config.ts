@@ -17,7 +17,7 @@ export const config = {
   cacheDir: path.resolve(
     __dirname,
     '..',
-    process.env['CACHE_DIR'] || '../tile-cache',
+    process.env['CACHE_DIR'] || './tile-cache',
   ),
   port: parseInt(process.env['PORT'] || '3000', 10),
   tileRows: 4,
