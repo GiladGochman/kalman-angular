@@ -17,16 +17,39 @@
       class="cover-image"
       (contextmenu)="$event.preventDefault()"
     />
-    <button
-      mat-raised-button
-      color="primary"
-      class="open-btn"
-      [class.opening]="isOpening()"
-      (click)="openBook()"
-    >
-      <mat-icon class="btn-icon">menu_book</mat-icon>
-      {{ t.openBook }}
-    </button>
+    @if (savedPage()) {
+      <button
+        mat-raised-button
+        color="primary"
+        class="open-btn"
+        [class.opening]="isOpening()"
+        (click)="openBook(savedPage()!)"
+      >
+        <mat-icon class="btn-icon">bookmark</mat-icon>
+        {{ t.continueFrom }} {{ savedPage() }}
+      </button>
+      <button
+        mat-stroked-button
+        color="primary"
+        class="open-btn start-over-btn no-open-anim"
+        [class.opening]="isOpening()"
+        (click)="startFromBeginning()"
+      >
+        <mat-icon class="btn-icon">first_page</mat-icon>
+        {{ t.startOver }}
+      </button>
+    } @else {
+      <button
+        mat-raised-button
+        color="primary"
+        class="open-btn"
+        [class.opening]="isOpening()"
+        (click)="openBook()"
+      >
+        <mat-icon class="btn-icon">menu_book</mat-icon>
+        {{ t.openBook }}
+      </button>
+    }
   </div>
 } @else {
   <div class="viewer-shell">

@@ -134,6 +134,15 @@
     box-shadow 0.15s ease;
 }
 
+.start-over-btn {
+  font-size: 1rem;
+  padding: 0.4rem 1.8rem;
+  opacity: 1;
+  background: rgba(144, 202, 249, 0.18);
+  border-color: rgba(144, 202, 249, 0.8);
+  color: #eaf4ff;
+}
+
 .open-btn:hover:not(.opening) {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
@@ -161,6 +170,10 @@
 .open-btn.opening {
   animation: bookOpen 1.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
   pointer-events: none;
+}
+
+.no-open-anim.opening {
+  animation: none;
 }
 
 .btn-icon {

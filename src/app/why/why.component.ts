@@ -1,6 +1,7 @@
 import {
   Component,
   OnInit,
+  OnDestroy,
   signal,
   ViewChild,
   ElementRef,
@@ -19,7 +20,10 @@ import { environment } from '../../environments/environment';
 
 const XOR_KEY = 0xa7;
 
-interface PageDims { width: number; height: number; }
+interface PageDims {
+  width: number;
+  height: number;
+}
 interface PdfMetadata {
   totalPages: number;
   tileRows: number;
@@ -37,6 +41,10 @@ const T = {
     page: 'Page',
     of: 'of',
     openBook: 'Open Book',
+    continueFrom: 'Continue from page',
+    startOver: 'Start from beginning',
+    savePrompt: (page: number) => `Save your progress at page ${page}?`,
+    keepPrompt: (page: number) => `Keep your saved progress at page ${page}?`,
     coverAlt: 'Why Did You Survive — Cover',
     helpTips: [
       {
@@ -61,6 +69,10 @@ const T = {
     page: 'עמוד',
     of: 'מתוך',
     openBook: 'פתח את הספר',
+    continueFrom: 'המשך מעמוד',
+    startOver: 'התחל מהתחלה',
+    savePrompt: (page: number) => `לשמור את ההתקדמות בעמוד ${page}?`,
+    keepPrompt: (page: number) => `לשמור את ההתקדמות בעמוד ${page}?`,
     coverAlt: 'למה שרדת — עטיפה',
     helpTips: [
       {
@@ -98,7 +110,7 @@ const ZOOM_MAX = 3.0;
   templateUrl: './why.component.html',
   styleUrls: ['./why.component.css'],
 })
-export class WhyComponent implements OnInit {
+export class WhyComponent implements OnInit, OnDestroy {
   @ViewChild('pageCanvas') pageCanvas!: ElementRef<HTMLCanvasElement>;
   @ViewChild('canvasWrapper') canvasWrapper!: ElementRef<HTMLDivElement>;
 
@@ -110,12 +122,15 @@ export class WhyComponent implements OnInit {
   zoom = signal(1.0);
   showHelp = signal(false);
   isOpening = signal(false);
+  savedPage = signal<number | null>(null);
 
   isDragging = false;
   private dragStartX = 0;
   private dragStartY = 0;
   private scrollStartX = 0;
   private scrollStartY = 0;
+  private leavingViaBeforeUnload = false;
+  private readonly COOKIE_KEY = 'why_page';
 
   public pdfUrl = environment.WHY_PDF_URL;
   constructor(
@@ -132,18 +147,70 @@ export class WhyComponent implements OnInit {
 
   ngOnInit(): void {
     this.http.get<PdfMetadata>('/assets/why-metadata.json').subscribe({
-      next: (data) => this.metadata.set(data),
+      next: (data) => {
+        this.metadata.set(data);
+        this.savedPage.set(this.readPageCookie());
+      },
       error: () => this.error.set('Could not load book metadata.'),
     });
   }
 
-  openBook(): void {
+  ngOnDestroy(): void {
+    if (this.leavingViaBeforeUnload) return;
+    if (!this.showCover() && this.currentPage() > 1) {
+      const save = window.confirm(this.t.savePrompt(this.currentPage()));
+      if (save) this.writePageCookie(this.currentPage());
+      else this.clearPageCookie();
+    }
+  }
+
+  @HostListener('window:beforeunload', ['$event'])
+  onBeforeUnload(event: BeforeUnloadEvent): void {
+    if (!this.showCover() && this.currentPage() > 1) {
+      this.leavingViaBeforeUnload = true;
+      this.writePageCookie(this.currentPage());
+      event.preventDefault();
+      event.returnValue = '';
+      setTimeout(() => {
+        this.leavingViaBeforeUnload = false;
+        const keep = window.confirm(this.t.keepPrompt(this.currentPage()));
+        if (!keep) this.clearPageCookie();
+      }, 100);
+    }
+  }
+
+  openBook(page = 1): void {
     this.isOpening.set(true);
     setTimeout(() => {
       this.isOpening.set(false);
       this.showCover.set(false);
-      this.loadPage(1);
+      this.loadPage(page);
     }, 1400);
+  }
+
+  startFromBeginning(): void {
+    this.clearPageCookie();
+    this.savedPage.set(null);
+    this.openBook(1);
+  }
+
+  private readPageCookie(): number | null {
+    const match = document.cookie.match(
+      new RegExp('(?:^|; )' + this.COOKIE_KEY + '=([^;]*)'),
+    );
+    if (!match) return null;
+    const val = parseInt(match[1], 10);
+    return isNaN(val) ? null : val;
+  }
+
+  private writePageCookie(page: number): void {
+    const expires = new Date();
+    expires.setFullYear(expires.getFullYear() + 1);
+    document.cookie = `${this.COOKIE_KEY}=${page};expires=${expires.toUTCString()};path=/`;
+  }
+
+  private clearPageCookie(): void {
+    document.cookie = `${this.COOKIE_KEY}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
   }
 
   toggleHelp(): void {
@@ -241,7 +308,13 @@ export class WhyComponent implements OnInit {
     forkJoin(fetches).subscribe({
       next: (blobs) => {
         this.isLoading.set(false);
-        this.renderTilesToCanvas(blobs, dims.width, dims.height, m.tileRows, m.tileCols);
+        this.renderTilesToCanvas(
+          blobs,
+          dims.width,
+          dims.height,
+          m.tileRows,
+          m.tileCols,
+        );
       },
       error: () => {
         this.isLoading.set(false);
