@@ -14,7 +14,7 @@ import * as path from 'path';
 interface BookConfig { key: string; pdfPath: string; }
 
 async function warmBook({ key, pdfPath }: BookConfig): Promise<void> {
-  const pdfName = `${key}-${path.basename(pdfPath, '.pdf')}`;
+  const pdfName = key;
   const info = await getPdfInfo(pdfPath);
   console.log(`\n[${key}] Warming up ${info.totalPages} pages...`);
 

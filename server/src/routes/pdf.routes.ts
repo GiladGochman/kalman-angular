@@ -1,5 +1,4 @@
 import { Router, Request, Response } from 'express';
-import * as path from 'path';
 import { config } from '../config';
 import { getPdfInfo, renderPage, getPageDimensions } from '../services/renderer.service';
 import { splitIntoTiles } from '../services/tiler.service';
@@ -60,7 +59,7 @@ router.get('/:book/page/:pageNum/tile/:row/:col', async (req: Request, res: Resp
   }
 
   try {
-    const pdfName = `${book}-${path.basename(pdfPath, '.pdf')}`;
+    const pdfName = book;
     const cached = getCachedTile(pdfName, pageNum, row, col);
     if (cached) {
       res.set('Content-Type', 'image/png');
