@@ -13,6 +13,7 @@
 
 # tile cache (generated at runtime)
 /tile-cache
+/src/assets/tile-cache
 
 # profiling files
 chrome-profiler-events*.json

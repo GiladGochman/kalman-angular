@@ -7,8 +7,7 @@ import {
   ElementRef,
   HostListener,
 } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { forkJoin } from 'rxjs';
+import { forkJoin, Observable } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
@@ -16,19 +15,19 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatCardModule } from '@angular/material/card';
 import { LanguageService } from '../language.service';
-import { environment } from '../../environments/environment';
 
 const XOR_KEY = 0xa7;
 
-interface PageDims {
+interface PdfPageInfo {
   width: number;
   height: number;
 }
+
 interface PdfMetadata {
   totalPages: number;
   tileRows: number;
   tileCols: number;
-  pages: PageDims[];
+  pages: PdfPageInfo[];
 }
 
 interface HelpTip {
@@ -95,6 +94,8 @@ const T = {
 const ZOOM_STEP = 0.25;
 const ZOOM_MIN = 0.5;
 const ZOOM_MAX = 3.0;
+
+const BOOK_FOLDER = 'reunion-pgishat mahzor';
 @Component({
   selector: 'app-reunion',
   standalone: true,
@@ -131,11 +132,7 @@ export class ReunionComponent implements OnInit, OnDestroy {
   private leavingViaBeforeUnload = false;
   private readonly COOKIE_KEY = 'reunion_page';
 
-  public pdfUrl = environment.REUNION_PDF_URL;
-  constructor(
-    private http: HttpClient,
-    public langSvc: LanguageService,
-  ) {}
+  constructor(public langSvc: LanguageService) {}
 
   get t() {
     return T[this.langSvc.lang()];
@@ -145,12 +142,15 @@ export class ReunionComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.http.get<PdfMetadata>('/assets/reunion-metadata.json').subscribe({
+    this.loadMetadata().subscribe({
       next: (data) => {
         this.metadata.set(data);
         this.savedPage.set(this.readPageCookie());
+        if (!this.showCover() && this.savedPage()) {
+          this.loadPage(this.currentPage());
+        }
       },
-      error: () => this.error.set('Could not load reunion metadata.'),
+      error: () => this.error.set('Could not load the local book files.'),
     });
   }
 
@@ -297,19 +297,12 @@ export class ReunionComponent implements OnInit, OnDestroy {
     this.currentPage.set(page);
     this.isLoading.set(true);
 
-    const dims = m.pages[page - 1];
+    const info = m.pages[page - 1];
     const tileCount = m.tileRows * m.tileCols;
-    const base = environment.R2_TILES_BASE_URL
-      ? `${environment.R2_TILES_BASE_URL}/reunion`
-      : `/api/reunion/page/${page}/tile`;
-
     const fetches = Array.from({ length: tileCount }, (_, i) => {
       const row = Math.floor(i / m.tileCols);
       const col = i % m.tileCols;
-      const url = environment.R2_TILES_BASE_URL
-        ? `${base}/p${page}-r${row}-c${col}.png`
-        : `${base}/${row}/${col}`;
-      return this.http.get(url, { responseType: 'blob' });
+      return this.loadTile(page, row, col);
     });
 
     forkJoin(fetches).subscribe({
@@ -317,17 +310,59 @@ export class ReunionComponent implements OnInit, OnDestroy {
         this.isLoading.set(false);
         this.renderTilesToCanvas(
           blobs,
-          dims.width,
-          dims.height,
+          info.width,
+          info.height,
           m.tileRows,
           m.tileCols,
         );
       },
       error: () => {
         this.isLoading.set(false);
-        this.error.set('Failed to load page tiles.');
+        this.error.set('Failed to load local page tiles.');
       },
     });
+  }
+
+  private loadMetadata(): Observable<PdfMetadata> {
+    return this.loadJson<PdfMetadata>(this.assetUrl('metadata.json'));
+  }
+
+  private loadTile(page: number, row: number, col: number): Observable<Blob> {
+    return this.loadBlob(this.assetUrl(`p${page}-r${row}-c${col}.png`));
+  }
+
+  private loadJson<T>(url: string): Observable<T> {
+    return new Observable<T>((subscriber) => {
+      fetch(url)
+        .then((response) => {
+          if (!response.ok) throw new Error(response.statusText);
+          return response.json() as Promise<T>;
+        })
+        .then((data) => {
+          subscriber.next(data);
+          subscriber.complete();
+        })
+        .catch((error) => subscriber.error(error));
+    });
+  }
+
+  private loadBlob(url: string): Observable<Blob> {
+    return new Observable<Blob>((subscriber) => {
+      fetch(url)
+        .then((response) => {
+          if (!response.ok) throw new Error(response.statusText);
+          return response.blob();
+        })
+        .then((blob) => {
+          subscriber.next(blob);
+          subscriber.complete();
+        })
+        .catch((error) => subscriber.error(error));
+    });
+  }
+
+  private assetUrl(fileName: string): string {
+    return encodeURI(`assets/tile-cache/${BOOK_FOLDER}/${fileName}`);
   }
 
   private async renderTilesToCanvas(
